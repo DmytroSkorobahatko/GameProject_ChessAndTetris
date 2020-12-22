@@ -17,6 +17,47 @@ def LoadImages():
         # IMAGE['wP']  ==   "wp.png" (SQ_SIZE x SQ_SIZE)
 
 
+def main():
+    pygame.init()
+    window = pygame.display.set_mode((WIDTH, HEIGHT))
+    window.fill(pygame.Color("white"))
+    pygame.display.set_caption("Chess game?")
+    pygame.display.update()
+    clock = pygame.time.Clock()
+    game = ChessEngine.Game()
+    LoadImages()
+    # drawMenu(window) ### does not work for now
+    run = True
+    sqSelected = ()  # no square
+    playerClicks = []  # track 1st and 2nd player [(0, 0), (1, 1)]
+    while run:
+        for e in pygame.event.get():
+            if e.type == pygame.QUIT:
+                run = False
+            elif e.type == pygame.MOUSEBUTTONDOWN:
+                location = pygame.mouse.get_pos()  # location[x, y]
+                col = location[0] // SQ_SIZE
+                row = location[1] // SQ_SIZE
+                if sqSelected == (row, col):  # same
+                    sqSelected = ()
+                    playerClicks = []
+                else:
+                    sqSelected = (row, col)
+                    playerClicks.append(sqSelected)
+                if len(playerClicks) == 2:
+                    move = ChessEngine.Move(playerClicks[0], playerClicks[1], game.board)
+                    print(move.getChessNotation())
+                    game.makeMove(move)
+                    sqSelected = () #clear move
+                    playerClicks = []
+
+
+        drawGame(window, game)
+
+        clock.tick(FPS)
+        pygame.display.flip()
+
+
 # menu don't work :( #
 # def drawMenu(window):
 #     menu_bg = pygame_menu.baseimage.BaseImage('images/menu_bg.jpg')
@@ -35,44 +76,28 @@ def LoadImages():
 #     arg.disable()  # should close menu
 
 
-def drawGame(window):
-    LoadImages()
+# graphics #################
+
+def drawGame(window, game):
     drawBoard(window)
-    drawPieces(window)
+    drawPieces(window, game.board)
 
 
 def drawBoard(window):
-    pass
+    colors = [pygame.Color("white"), pygame.Color("gray")]
+    for r in range(DIMENSION):
+        for c in range(DIMENSION):
+            color = colors[(r + c) % 2]
+            pygame.draw.rect(window, color, pygame.Rect(c * SQ_SIZE, r * SQ_SIZE, SQ_SIZE, SQ_SIZE))
 
 
-def drawPieces(window):
-    pass
-
-
-def main():
-    pygame.init()
-
-    window = pygame.display.set_mode((WIDTH, HEIGHT))
-    window.fill(pygame.Color("white"))
-
-    pygame.display.set_caption("Chess game?")
-    pygame.display.update()
-    clock = pygame.time.Clock()
-
-    g = ChessEngine.Game()
-    LoadImages()
-
-    # drawMenu(window) ### does not work for now
-    run = True
-    while run:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run = False
-
-        pygame.display.update()
-        clock.tick(FPS)
+def drawPieces(window, board):
+    for r in range(DIMENSION):
+        for c in range(DIMENSION):
+            piece = board[r][c]
+            if piece != "--":
+                window.blit(IMAGES[piece], pygame.Rect(c * SQ_SIZE, r * SQ_SIZE, SQ_SIZE, SQ_SIZE))
 
 
 if __name__ == '__main__':
     main()
-
