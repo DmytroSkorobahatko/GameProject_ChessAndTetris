@@ -8,6 +8,7 @@ DIMENSION = 8  # 8 x 8 - common in chess
 SQ_SIZE = HEIGHT // DIMENSION
 FPS = 30
 IMAGES = {}
+COLORS = [(255, 255, 255), (100, 100, 100)]
 
 
 def LoadImages():
@@ -41,7 +42,7 @@ def playChess():
                 pygame.quit()
                 sys.exit()
 
-            elif e.type == pygame.MOUSEBUTTONDOWN:
+            elif e.type == pygame.MOUSEBUTTONDOWN:  # mouse down checker ######
                 location = pygame.mouse.get_pos()  # location[x, y]
                 col = location[0] // SQ_SIZE
                 row = location[1] // SQ_SIZE
@@ -51,6 +52,9 @@ def playChess():
                 else:
                     sqSelected = (row, col)
                     playerClicks.append(sqSelected)
+                if len(playerClicks) == 1 and game.board[sqSelected[0]][sqSelected[1]] == "--":
+                    sqSelected = ()
+                    playerClicks = []
                 if len(playerClicks) == 2:
                     move = ChessEngine.Move(playerClicks[0], playerClicks[1], game.board)
                     print(move.getChessNotation())
@@ -60,7 +64,7 @@ def playChess():
                     sqSelected = ()  # clear move
                     playerClicks = []
 
-            elif e.type == pygame.KEYDOWN:
+            elif e.type == pygame.KEYDOWN:  # keys down checker #####
                 if e.key == pygame.K_z:
                     game.undoMove()
                     moveMade = True
@@ -85,7 +89,8 @@ def drawGame(window, game):
 
 
 def drawBoard(window):
-    colors = [pygame.Color("white"), pygame.Color("gray")]
+    colors = [pygame.Color(COLORS[0]), pygame.Color(COLORS[1])]
+    # colors = [pygame.Color("white"), pygame.Color("gray")]
     for r in range(DIMENSION):
         for c in range(DIMENSION):
             color = colors[(r + c) % 2]
@@ -102,6 +107,11 @@ def drawPieces(window, board):
 
 # options #######################################
 
+def cellColor(color1, color2):
+    global COLORS
+    COLORS = [color1, color2]
+
+
 def options():
     pygame.init()
     pygame.display.set_caption('game base')
@@ -117,19 +127,27 @@ def options():
     run = True
     click = False
     while run:
-        screen.fill("gray")
+        screen.fill("black")
         screen.blit(bg_image, pygame.Rect(0, 0, WIDTH, HEIGHT))
 
         mx, my = pygame.mouse.get_pos()
 
         button_1 = pygame.Rect(bx, by * 1, bWidth, bHeight)
+        button_2 = pygame.Rect(bx, by + bHeight * 2, bWidth, bHeight)
 
         if button_1.collidepoint((mx, my)):
             if click:
-                pass
+                cellColor("white", "gray")
+                run = False
+        if button_2.collidepoint((mx, my)):
+            if click:
+                cellColor((100, 200, 200), (100, 100, 200))
+                run = False
 
         pygame.draw.rect(screen, (0, 0, 0), button_1)
-        draw_text('option', font, txt_color, screen, bx, by * 1)
+        draw_text('white / gray', font, txt_color, screen, bx, by * 1)
+        pygame.draw.rect(screen, (0, 0, 0), button_2)
+        draw_text('blue / cyan', font, txt_color, screen, bx, by + bHeight * 2)
 
         clock = pygame.time.Clock()
 
