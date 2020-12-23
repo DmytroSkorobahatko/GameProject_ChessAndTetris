@@ -1,4 +1,4 @@
-import pygame
+import pygame, sys
 import ChessEngine
 
 # https://www.youtube.com/watch?v=EnYui0e73Rs
@@ -17,7 +17,9 @@ def LoadImages():
         # IMAGE['wP']  ==   "wp.png" (SQ_SIZE x SQ_SIZE)
 
 
-def main():
+# chess #########################
+
+def playChess():
     pygame.init()
     window = pygame.display.set_mode((WIDTH, HEIGHT))
     window.fill(pygame.Color("white"))
@@ -25,6 +27,9 @@ def main():
     pygame.display.update()
     clock = pygame.time.Clock()
     game = ChessEngine.Game()
+    validMoves = game.getValidMove()
+    moveMade = False
+
     LoadImages()
     # drawMenu(window) ### does not work for now
     run = True
@@ -33,7 +38,9 @@ def main():
     while run:
         for e in pygame.event.get():
             if e.type == pygame.QUIT:
-                run = False
+                pygame.quit()
+                sys.exit()
+
             elif e.type == pygame.MOUSEBUTTONDOWN:
                 location = pygame.mouse.get_pos()  # location[x, y]
                 col = location[0] // SQ_SIZE
@@ -47,36 +54,30 @@ def main():
                 if len(playerClicks) == 2:
                     move = ChessEngine.Move(playerClicks[0], playerClicks[1], game.board)
                     print(move.getChessNotation())
-                    game.makeMove(move)
-                    sqSelected = () #clear move
+                    if move in validMoves:
+                        game.makeMove(move)
+                        moveMade = True
+                    sqSelected = ()  # clear move
                     playerClicks = []
 
+            elif e.type == pygame.KEYDOWN:
+                if e.key == pygame.K_z:
+                    game.undoMove()
+                    moveMade = True
+
+                if e.key == pygame.K_ESCAPE:
+                    run = False
+
+        if moveMade:
+            validMoves = game.getValidMove()
+            moveMade = False
 
         drawGame(window, game)
-
         clock.tick(FPS)
         pygame.display.flip()
 
 
-# menu don't work :( #
-# def drawMenu(window):
-#     menu_bg = pygame_menu.baseimage.BaseImage('images/menu_bg.jpg')
-#     themes = {
-#         'dark': pygame_menu.themes.Theme(menubar_close_button=False, background_color=menu_bg,
-#                                          title_bar_style=pygame_menu.widgets.MENUBAR_STYLE_NONE)}
-#     menu = pygame_menu.Menu(WIDTH, HEIGHT, title="Chess", theme=themes["dark"])
-#     # menu.add_text_input('name :')
-#     # menu.add_selector('Difficulty :', [('Hard', 1), ('Easy', 2)])
-#     menu.add_button('Play', item_selected(menu))
-#     menu.add_button('Quit', pygame_menu.events.EXIT)
-#     menu.add_button('Quit', print(0))
-#     menu.enable()
-#     menu.mainloop(window)
-# def item_selected(arg):
-#     arg.disable()  # should close menu
-
-
-# graphics #################
+# graphics #####################
 
 def drawGame(window, game):
     drawBoard(window)
@@ -99,5 +100,115 @@ def drawPieces(window, board):
                 window.blit(IMAGES[piece], pygame.Rect(c * SQ_SIZE, r * SQ_SIZE, SQ_SIZE, SQ_SIZE))
 
 
+# options #######################################
+
+def options():
+    pygame.init()
+    pygame.display.set_caption('game base')
+    screen = pygame.display.set_mode((WIDTH, HEIGHT), 0, 32)
+    font = pygame.font.SysFont("menu_font", 32)
+    bg_image = pygame.transform.scale(pygame.image.load("images/menu_bg2.jpg"), (WIDTH, HEIGHT))
+    txt_color = (200, 200, 200)
+    bWidth = 100
+    bHeight = 20
+    bx = WIDTH // 2 - bWidth
+    by = HEIGHT // 3 - bHeight
+
+    run = True
+    click = False
+    while run:
+        screen.fill("gray")
+        screen.blit(bg_image, pygame.Rect(0, 0, WIDTH, HEIGHT))
+
+        mx, my = pygame.mouse.get_pos()
+
+        button_1 = pygame.Rect(bx, by * 1, bWidth, bHeight)
+
+        if button_1.collidepoint((mx, my)):
+            if click:
+                pass
+
+        pygame.draw.rect(screen, (0, 0, 0), button_1)
+        draw_text('option', font, txt_color, screen, bx, by * 1)
+
+        clock = pygame.time.Clock()
+
+        click = False
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    run = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    click = True
+
+        pygame.display.update()
+        clock.tick(FPS)
+
+
+# man menu ######################################
+
+def draw_text(text, font, color, surface, x, y):
+    text_obj = font.render(text, 1, color)
+    text_rect = text_obj.get_rect()
+    text_rect.topleft = (x, y)
+    surface.blit(text_obj, text_rect)
+
+
+def main_menu():
+    pygame.init()
+    pygame.display.set_caption('game base')
+    screen = pygame.display.set_mode((WIDTH, HEIGHT), 0, 32)
+    font = pygame.font.SysFont("menu_font", 32)
+    bg_image = pygame.transform.scale(pygame.image.load("images/menu_bg2.jpg"), (WIDTH, HEIGHT))
+    txt_color = (200, 200, 200)
+    bWidth = 100
+    bHeight = 20
+    bx = WIDTH // 2 - bWidth
+    by = HEIGHT // 3 - bHeight
+
+    click = False
+    while True:
+        screen.fill("black")
+        screen.blit(bg_image, pygame.Rect(0, 0, WIDTH, HEIGHT))
+
+        mx, my = pygame.mouse.get_pos()
+
+        button_1 = pygame.Rect(bx, by * 1, bWidth, bHeight)
+        button_2 = pygame.Rect(bx, by + bHeight * 2, bWidth, bHeight)
+
+        if button_1.collidepoint((mx, my)):
+            if click:
+                playChess()
+        if button_2.collidepoint((mx, my)):
+            if click:
+                options()
+        pygame.draw.rect(screen, (0, 0, 0), button_1)
+        pygame.draw.rect(screen, (0, 0, 0), button_2)
+        draw_text('Play chess', font, txt_color, screen, bx, by * 1)
+        draw_text('Options', font, txt_color, screen, bx, by + bHeight * 2)
+
+        clock = pygame.time.Clock()
+
+        click = False
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    click = True
+
+        pygame.display.update()
+        clock.tick(FPS)
+
+
 if __name__ == '__main__':
-    main()
+    main_menu()
