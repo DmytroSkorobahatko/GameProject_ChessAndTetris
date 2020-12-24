@@ -13,6 +13,9 @@ class Game():
             ["--", "--", "--", "--", "--", "--", "--", "--"],
             ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
             ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]]
+        self.piecesMoves = {"p": self.getPawnMoves, "R": self.getRookMoves,
+                            "B": self.getBishopMoves, "N": self.getKnightMoves,
+                            "K": self.getKingMoves, "Q": self.getQueenMoves}
         self.whiteMove = True
         self.moveLog = []
 
@@ -26,7 +29,7 @@ class Game():
         if len(self.moveLog) != 0:
             move = self.moveLog.pop()
             self.board[move.startRow][move.startCol] = move.pieceMoved
-            self.board[move.endRow][move.endCol] = move.placeCaptured
+            self.board[move.endRow][move.endCol] = move.pieceCaptured
             self.whiteMove = not self.whiteMove
 
     def getValidMove(self):
@@ -39,18 +42,7 @@ class Game():
                 color = self.board[r][c][0]
                 if (color == "w" and self.whiteMove) or (color == "b" and not self.whiteMove):
                     piece = self.board[r][c][1]
-                    if piece == "p":
-                        self.getPawnMoves(r, c, moves)
-                    elif piece == "R":
-                        self.getRookMoves(r, c, moves)
-                    elif piece == "B":
-                        self.getBishopMoves(r, c, moves)
-                    elif piece == "N":
-                        self.getKnightMoves(r, c, moves)
-                    elif piece == "K":
-                        self.getKingMoves(r, c, moves)
-                    elif piece == "Q":
-                        self.getQueenMoves(r, c, moves)
+                    self.piecesMoves[piece](r, c, moves)
 
         return moves
 
@@ -130,7 +122,7 @@ class Game():
     def getKingMoves(self, r, c, moves):
         kingMoves = ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1))
         allyColor = "w" if self.whiteMove else "b"
-        for i in range(1, 8):
+        for i in range(0, 8):
             endRow = r + kingMoves[i][0]
             endCol = c + kingMoves[i][1]
             if 0 <= endRow < 8 and 0 <= endCol < 8:
@@ -157,7 +149,7 @@ class Move():
         self.endRow = endSq[0]
         self.endCol = endSq[1]
         self.pieceMoved = board[self.startRow][self.startCol]
-        self.placeCaptured = board[self.endRow][self.endCol]
+        self.pieceCaptured = board[self.endRow][self.endCol]
         self.moveID = self.startRow * 1000 + self.startCol * 100 + self.endRow * 10 + self.endCol
 
     def __eq__(self, other):

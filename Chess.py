@@ -1,5 +1,6 @@
 import pygame, sys
 import ChessEngine
+from Tetris import startGame
 
 # https://www.youtube.com/watch?v=EnYui0e73Rs
 
@@ -8,7 +9,7 @@ DIMENSION = 8  # 8 x 8 - common in chess
 SQ_SIZE = HEIGHT // DIMENSION
 FPS = 30
 IMAGES = {}
-COLORS = [(255, 255, 255), (100, 100, 100)]
+COLORS = [(255, 255, 255), (200, 200, 200)]
 
 
 def LoadImages():
@@ -30,7 +31,7 @@ def playChess():
     game = ChessEngine.Game()
     validMoves = game.getValidMove()
     moveMade = False
-
+    animate = True
     LoadImages()
     # drawMenu(window) ### does not work for now
     run = True
@@ -61,6 +62,7 @@ def playChess():
                     if move in validMoves:
                         game.makeMove(move)
                         moveMade = True
+                        animate = True
                     sqSelected = ()  # clear move
                     playerClicks = []
 
@@ -68,23 +70,34 @@ def playChess():
                 if e.key == pygame.K_z:
                     game.undoMove()
                     moveMade = True
-
+                    animate = False
+                if e.key == pygame.K_r:
+                    game = ChessEngine.Game()
+                    validMoves = game.getValidMove()
+                    sqSelected = ()
+                    playerClicks = []
+                    animate = False
+                    moveMade = False
                 if e.key == pygame.K_ESCAPE:
                     run = False
 
         if moveMade:
+            if animate:
+                animation(game.moveLog[-1], window, game.board, clock)
             validMoves = game.getValidMove()
             moveMade = False
+            animate = False
 
-        drawGame(window, game)
+        drawGame(window, game, sqSelected, validMoves)
         clock.tick(FPS)
         pygame.display.flip()
 
 
-# graphics #####################
+# graphics ##########################################
 
-def drawGame(window, game):
+def drawGame(window, game, sqSelected, validMoves):
     drawBoard(window)
+    highlightCells(window, game, sqSelected, validMoves)
     drawPieces(window, game.board)
 
 
@@ -105,7 +118,40 @@ def drawPieces(window, board):
                 window.blit(IMAGES[piece], pygame.Rect(c * SQ_SIZE, r * SQ_SIZE, SQ_SIZE, SQ_SIZE))
 
 
-# options #######################################
+def highlightCells(window, game, sqSelected, validMoves):
+    if sqSelected != ():
+        r, c = sqSelected
+        if game.board[r][c][0] == ("w" if game.whiteMove else "b"):
+            s = pygame.Surface((SQ_SIZE, SQ_SIZE))
+            s.set_alpha(100)
+            s.fill(pygame.Color("blue"))
+            window.blit(s, (c * SQ_SIZE, r * SQ_SIZE))
+            s.fill(pygame.Color("yellow"))
+            for move in validMoves:
+                if move.startCol == c and move.startRow == r:
+                    window.blit(s, (SQ_SIZE * move.endCol, SQ_SIZE * move.endRow))
+
+
+def animation(move, window, board, clock):
+    dR = move.endRow - move.startRow
+    dC = move.endCol - move.startCol
+    framesPerCell = 3
+    framesCount = (abs(dR) + abs(dC)) * framesPerCell
+    for frame in range(framesCount + 1):
+        r, c = (move.startRow + dR * frame / framesCount, move.startCol + dC * frame / framesCount)
+        drawBoard(window)
+        drawPieces(window, board)
+        color = COLORS[(move.endRow + move.endCol) % 2]
+        endCell = pygame.Rect(move.endCol * SQ_SIZE, move.endRow * SQ_SIZE, SQ_SIZE, SQ_SIZE)
+        pygame.draw.rect(window, color, endCell)
+        if move.pieceCaptured != "--":
+            window.blit(IMAGES[move.pieceCaptured], endCell)
+        window.blit(IMAGES[move.pieceMoved], pygame.Rect(c * SQ_SIZE, r * SQ_SIZE, SQ_SIZE, SQ_SIZE))
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
+# options ######################################################
 
 def cellColor(color1, color2):
     global COLORS
@@ -119,10 +165,12 @@ def options():
     font = pygame.font.SysFont("menu_font", 32)
     bg_image = pygame.transform.scale(pygame.image.load("images/menu_bg2.jpg"), (WIDTH, HEIGHT))
     txt_color = (200, 200, 200)
-    bWidth = 100
-    bHeight = 20
+    bWidth = WIDTH // 4
+    bHeight = HEIGHT // 20
     bx = WIDTH // 2 - bWidth
-    by = HEIGHT // 3 - bHeight
+    by = HEIGHT // 6 - bHeight
+    dy = 1.5
+    dx = 0.5
 
     run = True
     click = False
@@ -133,7 +181,10 @@ def options():
         mx, my = pygame.mouse.get_pos()
 
         button_1 = pygame.Rect(bx, by * 1, bWidth, bHeight)
-        button_2 = pygame.Rect(bx, by + bHeight * 2, bWidth, bHeight)
+        button_2 = pygame.Rect(bx, by + bHeight * dy, bWidth, bHeight)
+        button_3 = pygame.Rect(bx, by + bHeight * 2 * dy, bWidth, bHeight)
+        button_extra_1 = pygame.Rect(bx, by + bHeight * 4 * dy, bWidth, bHeight)
+        button_extra_2 = pygame.Rect(bx, by + bHeight * 5 * dy, bWidth, bHeight)
 
         if button_1.collidepoint((mx, my)):
             if click:
@@ -143,11 +194,29 @@ def options():
             if click:
                 cellColor((100, 200, 200), (100, 100, 200))
                 run = False
+        if button_3.collidepoint((mx, my)):
+            if click:
+                cellColor((250, 240, 200), (150, 100, 50))
+                run = False
+        if button_extra_1.collidepoint((mx, my)):
+            if click:
+                cellColor((250, 250, 250), (250, 250, 250))
+                run = False
+        if button_extra_2.collidepoint((mx, my)):
+            if click:
+                cellColor((5, 5, 10), (5, 5, 5))
+                run = False
 
-        pygame.draw.rect(screen, (0, 0, 0), button_1)
+        # pygame.draw.rect(screen, (0, 0, 0), button_1)
+        # pygame.draw.rect(screen, (0, 0, 0), button_2)
+        # pygame.draw.rect(screen, (0, 0, 0), button_3)
         draw_text('white / gray', font, txt_color, screen, bx, by * 1)
-        pygame.draw.rect(screen, (0, 0, 0), button_2)
-        draw_text('blue / cyan', font, txt_color, screen, bx, by + bHeight * 2)
+        draw_text('blue / cyan', font, txt_color, screen, bx, by + bHeight * dy)  # dy = 1.5
+        draw_text('white / brown', font, txt_color, screen, bx, by + bHeight * 2 * dy)  # dy = 1.5
+        draw_text("Cells color", font, txt_color, screen, bx - bWidth * dx, by - bHeight * dy)  # dy = 1.5 dx = 0.5
+        draw_text("Extra options", font, txt_color, screen, bx - bWidth * dx, by + bHeight * 3 * dy)
+        draw_text('white board', font, txt_color, screen, bx, by + bHeight * 4 * dy)
+        draw_text('night mode', font, txt_color, screen, bx, by + bHeight * 5 * dy)
 
         clock = pygame.time.Clock()
 
@@ -167,7 +236,17 @@ def options():
         clock.tick(FPS)
 
 
-# man menu ######################################
+#
+# tetris ###########################################
+#
+
+def playTetris():
+    startGame()
+
+
+#
+# man menu ##################################################
+#
 
 def draw_text(text, font, color, surface, x, y):
     text_obj = font.render(text, 1, color)
@@ -183,8 +262,8 @@ def main_menu():
     font = pygame.font.SysFont("menu_font", 32)
     bg_image = pygame.transform.scale(pygame.image.load("images/menu_bg2.jpg"), (WIDTH, HEIGHT))
     txt_color = (200, 200, 200)
-    bWidth = 100
-    bHeight = 20
+    bWidth = WIDTH // 3
+    bHeight = HEIGHT // 20
     bx = WIDTH // 2 - bWidth
     by = HEIGHT // 3 - bHeight
 
@@ -197,6 +276,7 @@ def main_menu():
 
         button_1 = pygame.Rect(bx, by * 1, bWidth, bHeight)
         button_2 = pygame.Rect(bx, by + bHeight * 2, bWidth, bHeight)
+        button_3 = pygame.Rect(bx, by - bHeight * 2, bWidth, bHeight)
 
         if button_1.collidepoint((mx, my)):
             if click:
@@ -204,13 +284,17 @@ def main_menu():
         if button_2.collidepoint((mx, my)):
             if click:
                 options()
+        if button_3.collidepoint((mx, my)):
+            if click:
+                playTetris()
         pygame.draw.rect(screen, (0, 0, 0), button_1)
         pygame.draw.rect(screen, (0, 0, 0), button_2)
         draw_text('Play chess', font, txt_color, screen, bx, by * 1)
         draw_text('Options', font, txt_color, screen, bx, by + bHeight * 2)
+        draw_text('Play Tetris', font, txt_color, screen, bx, by - bHeight * 2)
+        draw_text('by Nick Komarov', pygame.font.SysFont("menu_font", 24), txt_color, screen, bx + bWidth * 0.8, by - bHeight * 2)
 
         clock = pygame.time.Clock()
-
         click = False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
