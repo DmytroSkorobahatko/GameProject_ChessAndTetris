@@ -8,7 +8,7 @@ class Field():
         self.height = height
         self.width = width
         self.tile = tile
-        self.field = [[0 for i in range(self.width+1)] for j in range(self.height+1)]
+        self.field = [[0 for i in range(self.width + 1)] for j in range(self.height + 1)]
 
     def new_figure(self):
         self.figure = Figure.Figure(3, -2)

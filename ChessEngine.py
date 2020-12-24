@@ -33,8 +33,9 @@ class Game():
             self.whiteMove = not self.whiteMove
 
     def getValidMove(self):
-        return self.getAllPossibleMove()
+        return self.getAllPossibleMove
 
+    @property
     def getAllPossibleMove(self):
         moves = []
         for r in range(len(self.board)):  # row
