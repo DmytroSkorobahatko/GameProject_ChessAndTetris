@@ -18,12 +18,20 @@ class Game():
                             "K": self.getKingMoves, "Q": self.getQueenMoves}
         self.whiteMove = True
         self.moveLog = []
+        self.wKingLoc = (7, 4)
+        self.bKingLoc = (0, 4)
+        self.checkMate = False
+        self.staleMate = False
 
     def makeMove(self, move):
         self.board[move.startRow][move.startCol] = "--"
         self.board[move.endRow][move.endCol] = move.pieceMoved
         self.moveLog.append(move)  # move log
         self.whiteMove = not self.whiteMove  # swap move
+        if move.pieceMoved == "wK":
+            self.wKingLoc = (move.endRow, move.endCol)
+        elif move.pieceMoved == "bK":
+            self.bKingLoc = (move.endRow, move.endCol)
 
     def undoMove(self):
         if len(self.moveLog) != 0:
@@ -31,11 +39,49 @@ class Game():
             self.board[move.startRow][move.startCol] = move.pieceMoved
             self.board[move.endRow][move.endCol] = move.pieceCaptured
             self.whiteMove = not self.whiteMove
+            if move.pieceMoved == "wK":
+                self.wKingLoc = (move.startRow, move.startCol)
+            elif move.pieceMoved == "bK":
+                self.bKingLoc = (move.startRow, move.startCol)
 
     def getValidMove(self):
-        return self.getAllPossibleMove
+        moves = self.getAllPossibleMove()
 
-    @property
+        for i in range(len(moves) - 1, -1, -1):
+            self.makeMove(moves[i])
+
+            self.whiteMove = not self.whiteMove
+            if self.inCheck():
+                moves.remove(moves[i])
+            self.whiteMove = not self.whiteMove
+            self.undoMove()
+        if len(moves) == 0:
+            if self.inCheck():
+                self.checkMate = True
+            else:
+                self.staleMate = True
+        else:
+            self.checkMate = False
+            self.staleMate = False
+
+        return moves
+
+    def inCheck(self):
+        if self.whiteMove:
+            return self.sqUnderAttack(self.wKingLoc[0], self.wKingLoc[1])
+        else:
+            return self.sqUnderAttack(self.bKingLoc[0], self.bKingLoc[1])
+
+    def sqUnderAttack(self, r, c):
+        self.whiteMove = not self.whiteMove
+        oppMoves = self.getAllPossibleMove()
+        self.whiteMove = not self.whiteMove
+        for move in oppMoves:
+            if move.endRow == r and move.endCol == c:
+                return True
+        return False
+
+    # @property
     def getAllPossibleMove(self):
         moves = []
         for r in range(len(self.board)):  # row

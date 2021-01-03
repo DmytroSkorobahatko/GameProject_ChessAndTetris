@@ -1,4 +1,7 @@
-import pygame, sys
+# 10 - 155 = chess ## 160 - 370 = options ## 370 - 380 = call tetris ## 380+ = main menu
+
+import pygame
+import sys
 import ChessEngine
 from Tetris import startGame
 
@@ -58,8 +61,9 @@ def playChess():
                         playerClicks = []
                     if len(playerClicks) == 2:
                         move = ChessEngine.Move(playerClicks[0], playerClicks[1], game.board)
-                        print(move.getChessNotation())
+                        # print(move.getChessNotation())
                         if move in validMoves:
+                            printNotation(game, move, playerClicks)
                             game.makeMove(move)
                             moveMade = True
                             animate = True
@@ -115,6 +119,14 @@ def drawPieces(window, board):
             piece = board[r][c]
             if piece != "--":
                 window.blit(IMAGES[piece], pygame.Rect(c * SQ_SIZE, r * SQ_SIZE, SQ_SIZE, SQ_SIZE))
+
+
+def printNotation(game, move, playerClicks):
+    piece = game.board[playerClicks[0][0]][playerClicks[0][1]][1]
+    endRow = move.getChessNotation()[2]
+    endCol = move.getChessNotation()[3]
+    if piece == "p": piece = ""
+    return print(piece + endRow + endCol)
 
 
 def highlightCells(window, game, sqSelected, validMoves):
@@ -246,7 +258,7 @@ def optionsChess():
         button_3 = pygame.Rect(bx, by + bHeight * 2 * dy, bWidth, bHeight)
         button_extra_1 = pygame.Rect(bx, by + bHeight * 4 * dy, bWidth, bHeight)
         button_extra_black = pygame.Rect(bx, by + bHeight * 5 * dy, bWidth, bHeight)
-        button_main = pygame.Rect(bx - bWidth * dx, by + bHeight * 7*dy, bWidth, bHeight)
+        button_main = pygame.Rect(bx - bWidth * dx, by + bHeight * 7 * dy, bWidth, bHeight)
 
         if button_1.collidepoint((mx, my)):
             if click:
@@ -276,11 +288,11 @@ def optionsChess():
         draw_text('white / gray', font_settings, txt_color, screen, bx, by * 1)
         draw_text('blue / cyan', font_settings, txt_color, screen, bx, by + bHeight * dy)
         draw_text('white / brown', font_settings, txt_color, screen, bx, by + bHeight * 2 * dy)  # dy = 1.5
-        draw_text("Cells color", font_settings, txt_color, screen, bx - bWidth * dx,by - bHeight * dy)  # dx = 0.5
+        draw_text("Cells color", font_settings, txt_color, screen, bx - bWidth * dx, by - bHeight * dy)  # dx = 0.5
         draw_text("Extra options", font_settings, txt_color, screen, bx - bWidth * dx, by + bHeight * 3 * dy)
         draw_text('white board', font_settings, txt_color, screen, bx, by + bHeight * 4 * dy)
         draw_text('night mode', font_settings, txt_color, screen, bx, by + bHeight * 5 * dy)
-        draw_text('back to options', font_settings, txt_color, screen, bx - bWidth * dx, by + bHeight * 7*dy)
+        draw_text('back to options', font_settings, txt_color, screen, bx - bWidth * dx, by + bHeight * 7 * dy)
 
         clock = pygame.time.Clock()
 
@@ -327,7 +339,7 @@ def optionsTetris():
 
         button_1 = pygame.Rect(bx, by * 1, bWidth, bHeight)
         button_2 = pygame.Rect(bx, by + bHeight * dy, bWidth, bHeight)
-        button_main = pygame.Rect(bx - bWidth * dx, by + bHeight * 7*dy, bWidth, bHeight)
+        button_main = pygame.Rect(bx - bWidth * dx, by + bHeight * 7 * dy, bWidth, bHeight)
 
         if button_1.collidepoint((mx, my)):
             if click:
@@ -343,7 +355,7 @@ def optionsTetris():
 
         draw_text('dark', font_settings, txt_color, screen, bx, by * 1)
         draw_text('light', font_settings, txt_color, screen, bx, by + bHeight * dy)  # dy = 1.5
-        draw_text('back to options', font_settings, txt_color, screen, bx - bWidth * dx, by + bHeight * 7*dy)
+        draw_text('back to options', font_settings, txt_color, screen, bx - bWidth * dx, by + bHeight * 7 * dy)
 
         clock = pygame.time.Clock()
 
@@ -373,7 +385,7 @@ def playTetris():
 
 
 #
-# man menu ##################################################
+# main menu ##################################################
 #
 
 def draw_text(text, font, color, surface, x, y):
