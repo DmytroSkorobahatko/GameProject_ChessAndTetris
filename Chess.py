@@ -41,34 +41,38 @@ def playChess():
     playerClicks = []  # track 1st and 2nd player [(0, 0), (1, 1)]
     while run:
         if not gameOver:
+
             for e in pygame.event.get():
                 if e.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
 
                 elif e.type == pygame.MOUSEBUTTONDOWN:  # mouse down checker ######
-                    location = pygame.mouse.get_pos()  # location[x, y]
-                    col = location[0] // SQ_SIZE
-                    row = location[1] // SQ_SIZE
-                    if sqSelected == (row, col):  # same
-                        sqSelected = ()
-                        playerClicks = []
+                    if game.checkMate:  # if there is checkmate
+                        print("Checkmate")
                     else:
-                        sqSelected = (row, col)
-                        playerClicks.append(sqSelected)
-                    if len(playerClicks) == 1 and game.board[sqSelected[0]][sqSelected[1]] == "--":
-                        sqSelected = ()
-                        playerClicks = []
-                    if len(playerClicks) == 2:
-                        move = ChessEngine.Move(playerClicks[0], playerClicks[1], game.board)
-                        # print(move.getChessNotation())
-                        if move in validMoves:
-                            printNotation(game, move, playerClicks)
-                            game.makeMove(move)
-                            moveMade = True
-                            animate = True
-                        sqSelected = ()  # clear move
-                        playerClicks = []
+                        location = pygame.mouse.get_pos()  # location[x, y]
+                        col = location[0] // SQ_SIZE
+                        row = location[1] // SQ_SIZE
+                        if sqSelected == (row, col):  # same
+                            sqSelected = ()
+                            playerClicks = []
+                        else:
+                            sqSelected = (row, col)
+                            playerClicks.append(sqSelected)
+                        if len(playerClicks) == 1 and game.board[sqSelected[0]][sqSelected[1]] == "--":
+                            sqSelected = ()
+                            playerClicks = []
+                        if len(playerClicks) == 2:
+                            move = ChessEngine.Move(playerClicks[0], playerClicks[1], game.board)
+                            # print(move.getChessNotation())
+                            if move in validMoves:
+                                printNotation(game, move, playerClicks)
+                                game.makeMove(move)
+                                moveMade = True
+                                animate = True
+                            sqSelected = ()  # clear move
+                            playerClicks = []
 
                 elif e.type == pygame.KEYDOWN:  # keys down checker #####
                     if e.key == pygame.K_z:
