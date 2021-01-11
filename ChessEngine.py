@@ -22,6 +22,11 @@ class Game():
         self.bKingLoc = (0, 4)
         self.checkMate = False
         self.staleMate = False
+        self.currentCastlingRight = CastleRights(True, True, True, True)
+        self.castleRightsLog = [CastleRights(self.currentCastlingRight.wks, self.currentCastlingRight.bks,
+                                             self.currentCastlingRight.wqs, self.currentCastlingRight.bqs, )]
+
+        self.chessMovesLog = []
 
     def makeMove(self, move):
         self.board[move.startRow][move.startCol] = "--"
@@ -33,6 +38,10 @@ class Game():
         elif move.pieceMoved == "bK":
             self.bKingLoc = (move.endRow, move.endCol)
 
+        self.updateCastleRights(move)
+        self.castleRightsLog.append(CastleRights(self.currentCastlingRight.wks, self.currentCastlingRight.bks,
+                                                 self.currentCastlingRight.wqs, self.currentCastlingRight.bqs, ))
+
     def undoMove(self):
         if len(self.moveLog) != 0:
             move = self.moveLog.pop()
@@ -43,6 +52,30 @@ class Game():
                 self.wKingLoc = (move.startRow, move.startCol)
             elif move.pieceMoved == "bK":
                 self.bKingLoc = (move.startRow, move.startCol)
+
+            self.castleRightsLog.pop()
+            self.currentCastlingRight = self.castleRightsLog[-1]
+
+
+    def updateCastleRights(self, move):
+        if move.pieceMoved == "wk":
+            self.currentCastlingRight.wks = False
+            self.currentCastlingRight.wqs = False
+        elif move.pieceMoved == "bk":
+            self.currentCastlingRight.bks = False
+            self.currentCastlingRight.bqs = False
+        elif move.pieceMoved == "wR":
+            if move.startRow == 7:
+                if move.startCol == 0:
+                    self.currentCastlingRight.wqs = False
+                elif move.startCol == 7:
+                    self.currentCastlingRight.wks = False
+        elif move.pieceMoved == "bR":
+            if move.startRow == 0:
+                if move.startCol == 0:
+                    self.currentCastlingRight.bqs = False
+                elif move.startCol == 7:
+                    self.currentCastlingRight.bks = False
 
     def getValidMove(self):
         moves = self.getAllPossibleMove()
@@ -182,6 +215,14 @@ class Game():
         self.getBishopMoves(r, c, moves)
 
 
+class CastleRights():
+    def __init__(self, wks, bks, wqs, bqs):
+        self.wks = wks
+        self.bks = bks
+        self.wqs = wqs
+        self.bqs = bks
+
+
 class Move():
     ranksToRows = {"1": 7, "2": 6, "3": 5, "4": 4,
                    "5": 3, "6": 2, "7": 1, "8": 0}
@@ -198,6 +239,8 @@ class Move():
         self.pieceMoved = board[self.startRow][self.startCol]
         self.pieceCaptured = board[self.endRow][self.endCol]
         self.moveID = self.startRow * 1000 + self.startCol * 100 + self.endRow * 10 + self.endCol
+        self.chessMovesLog = []
+        self.chessMovesLog.append(self.getChessNotation())
 
     def __eq__(self, other):
         if isinstance(other, Move):

@@ -2,6 +2,7 @@
 
 import pygame
 import sys
+from stockfish import Stockfish
 import ChessEngine
 from Tetris import startGame
 
@@ -11,6 +12,10 @@ SQ_SIZE = HEIGHT // DIMENSION
 FPS = 60
 IMAGES = {}
 COLORS = [(255, 255, 255), (200, 200, 200)]
+
+vsComputer = True
+compColor = "black"
+stockfish = Stockfish("/Users/Kirill_07/stockfish_12_win_x64/stockfish_20090216_x64")
 
 
 def LoadImages():
@@ -31,14 +36,22 @@ def playChess():
     clock = pygame.time.Clock()
     game = ChessEngine.Game()
     validMoves = game.getValidMove()
+    moveLog = []
     moveMade = False
     animate = True
     LoadImages()
     # drawMenu(window) ### does not work for now
     run = True
     gameOver = False
+    computerTurn = False
+    stockfish.set_skill_level(1)
+
     sqSelected = ()  # no square
     playerClicks = []  # track 1st and 2nd player [(0, 0), (1, 1)]
+    filesToCols = {"h": 7, "g": 6, "f": 5, "e": 4,
+                   "d": 3, "c": 2, "b": 1, "a": 0}
+    ranksToRows = {"1": 7, "2": 6, "3": 5, "4": 4,
+                   "5": 3, "6": 2, "7": 1, "8": 0}
     while run:
         if not gameOver:
 
@@ -46,6 +59,35 @@ def playChess():
                 if e.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+
+                elif vsComputer and computerTurn:
+                    if game.checkMate:  # if there is checkmate
+                        print("Checkmate")
+                    else:
+                        computerMove = computer(moveLog, game)
+                        col = filesToCols[computerMove[0:1]]
+                        row = ranksToRows[computerMove[1:2]]
+                        sqSelected = (row, col)
+                        print(sqSelected[0], sqSelected[1], "from")
+                        playerClicks.append(sqSelected)
+                        col = filesToCols[computerMove[2:3]]
+                        row = ranksToRows[computerMove[3:4]]
+                        sqSelected = (row, col)
+                        print(sqSelected[0], sqSelected[1], "to")
+                        playerClicks.append(sqSelected)
+                        # stockfish.set_position(moveLog)
+                        move = ChessEngine.Move(playerClicks[0], playerClicks[1], game.board)
+
+                        printNotation(game, move, playerClicks)
+                        game.makeMove(move)
+                        moveMade = True
+                        animate = True
+                        moveLog.append(move.getChessNotation())
+
+                        sqSelected = ()  # clear move
+                        playerClicks = []
+                        computerTurn = False
+
 
                 elif e.type == pygame.MOUSEBUTTONDOWN:  # mouse down checker ######
                     if game.checkMate:  # if there is checkmate
@@ -65,12 +107,13 @@ def playChess():
                             playerClicks = []
                         if len(playerClicks) == 2:
                             move = ChessEngine.Move(playerClicks[0], playerClicks[1], game.board)
-                            # print(move.getChessNotation())
                             if move in validMoves:
                                 printNotation(game, move, playerClicks)
                                 game.makeMove(move)
                                 moveMade = True
                                 animate = True
+                                moveLog.append(move.getChessNotation())
+                                print("moveLog = " + str(moveLog))
                             sqSelected = ()  # clear move
                             playerClicks = []
 
@@ -79,6 +122,9 @@ def playChess():
                         game.undoMove()
                         moveMade = True
                         animate = False
+                        moveLog.pop()
+                        if vsComputer:
+                            game.undoMove()
                     if e.key == pygame.K_r:
                         game = ChessEngine.Game()
                         validMoves = game.getValidMove()
@@ -86,6 +132,7 @@ def playChess():
                         playerClicks = []
                         animate = False
                         moveMade = False
+                        moveLog = []
                     if e.key == pygame.K_ESCAPE:
                         run = False
 
@@ -96,9 +143,28 @@ def playChess():
             moveMade = False
             animate = False
 
+            if vsComputer:
+                 computerTurn = True if not game.whiteMove else False
+                 if computerTurn:
+                    computerMove = computer(moveLog, game)
+                    print(computerMove, computerTurn)  # int(computerMove[1:2])
+
         drawGame(window, game, sqSelected, validMoves)
         clock.tick(FPS)
         pygame.display.flip()
+
+
+def computer(moveLog, game):
+    if compColor == "black":
+        if not game.whiteMove:
+            stockfish.set_position(moveLog)
+            compMove = stockfish.get_best_move()
+            return compMove
+    else:
+        if game.whiteMove:
+            stockfish.set_position(moveLog)
+            compMove = stockfish.get_best_move()
+            return compMove
 
 
 # graphics ##########################################
