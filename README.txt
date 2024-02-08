@@ -1,5 +1,5 @@
 to play this fantastic games by us**
-You have to
+You have to run "Chess.py", but earlier
 
 pip install stockfish
 pip install pygame
