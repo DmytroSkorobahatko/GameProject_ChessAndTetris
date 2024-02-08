@@ -15,7 +15,7 @@ COLORS = [(255, 255, 255), (200, 200, 200)]
 
 vsComputer = True
 compColor = "black"
-stockfish = Stockfish("/Users/Kirill_07/stockfish_12_win_x64/stockfish_20090216_x64")
+stockfish = Stockfish("/Users/Дмитрий/Downloads/stockfish-windows-x86-64-avx2/stockfish/stockfish-windows-x86-64-avx2.exe")
 
 
 def LoadImages():
